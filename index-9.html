@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WebNesia — Kumpulan Web & Game Indonesia</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}body{font-family:Arial,sans-serif;background:#0b1020;color:#fff;min-height:100vh}
+header{padding:30px 18px;text-align:center;background:linear-gradient(135deg,#111827,#172554);border-bottom:1px solid #26334d}.logo{font-size:32px;font-weight:800;color:#60a5fa}.sub{color:#aab6ca;margin-top:8px}
+main{max-width:1100px;margin:auto;padding:20px}.search{width:100%;padding:15px;border-radius:14px;border:1px solid #334155;background:#111827;color:#fff;font-size:16px;outline:0;margin-bottom:16px}
+.tabs{display:flex;gap:9px;overflow:auto;margin-bottom:20px}.tab{border:1px solid #334155;background:#111827;color:#cbd5e1;padding:11px 17px;border-radius:12px;white-space:nowrap}.tab.active{background:#2563eb;color:#fff;border-color:#2563eb}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}.card{background:#111827;border:1px solid #26334d;border-radius:18px;overflow:hidden}.thumb{height:145px;background:#1e293b;display:flex;align-items:center;justify-content:center}.thumb img{width:100%;height:100%;object-fit:cover}.emoji{font-size:50px}
+.content{padding:16px}.content h3{font-size:19px;margin-bottom:8px}.content p{color:#94a3b8;font-size:14px;line-height:1.5;min-height:42px}.badge{display:inline-block;margin:4px 0 12px;padding:5px 9px;border-radius:8px;background:#1d4ed8;font-size:12px}
+.open{display:block;width:100%;padding:11px;border-radius:11px;background:#2563eb;color:#fff;text-align:center;text-decoration:none;font-weight:bold}.empty{text-align:center;padding:60px 20px;color:#94a3b8}
+.admin{display:none;background:#111827;border:1px solid #334155;border-radius:18px;padding:18px;margin-bottom:20px}.admin.show{display:block}.admin h2{margin-bottom:12px}
+input,textarea,select{width:100%;padding:12px;margin:6px 0;background:#0b1220;border:1px solid #334155;border-radius:10px;color:#fff}textarea{min-height:80px}.actions{display:flex;gap:8px;margin-top:8px}button{cursor:pointer}.btn{padding:11px 15px;border:0;border-radius:10px;background:#2563eb;color:#fff}.red{background:#dc2626}.gray{background:#475569}
+.admin-float{position:fixed;right:18px;bottom:18px;width:52px;height:52px;border:0;border-radius:50%;background:#2563eb;color:#fff;font-size:22px;box-shadow:0 8px 25px #0008}footer{text-align:center;color:#64748b;padding:35px 20px}
+@media(max-width:500px){.logo{font-size:27px}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header><div class="logo">🌐 WebNesia</div><div class="sub">Kumpulan Web & Game Indonesia</div></header>
+<main>
+<input id="search" class="search" type="search" placeholder="🔎 Cari web atau game...">
+<div class="tabs"><button class="tab active" onclick="setCategory('Semua',this)">Semua</button><button class="tab" onclick="setCategory('Game',this)">🎮 Game</button><button class="tab" onclick="setCategory('Web',this)">🌐 Web</button></div>
+<section id="admin" class="admin"><h2>⚙️ Admin WebNesia</h2><input id="name" placeholder="Nama web / game"><input id="image" placeholder="URL gambar (opsional)"><input id="url" placeholder="URL web / game"><textarea id="description" placeholder="Deskripsi"></textarea><select id="category"><option value="Game">Game</option><option value="Web">Web</option></select><div class="actions"><button class="btn" onclick="saveItem()">💾 Simpan</button><button class="btn gray" onclick="clearForm()">Batal</button></div></section>
+<div id="grid" class="grid"></div>
+</main>
+<footer>WebNesia © 2026<br>Kumpulan Web & Game Indonesia</footer>
+<button class="admin-float" onclick="adminLogin()">⚙️</button>
+<script>
+const defaults=[{id:1,name:"WebNesia",description:"Portal kumpulan web dan game Indonesia.",image:"",url:"https://github.com/",category:"Web"},{id:2,name:"Game Browser",description:"Temukan berbagai game yang bisa dimainkan di browser.",image:"",url:"https://poki.com/",category:"Game"}];
+let items=JSON.parse(localStorage.getItem("webnesia_items"))||defaults,category="Semua",editId=null,isAdmin=false;
+function saveData(){localStorage.setItem("webnesia_items",JSON.stringify(items))}
+function safe(v){return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
+function render(){const q=document.getElementById("search").value.toLowerCase(),data=items.filter(x=>(category==="Semua"||x.category===category)&&(x.name.toLowerCase().includes(q)||x.description.toLowerCase().includes(q))),grid=document.getElementById("grid");if(!data.length){grid.innerHTML='<div class="empty"><h2>😕 Tidak ditemukan</h2><p>Coba pencarian lain.</p></div>';return}grid.innerHTML=data.map(x=>`<article class="card"><div class="thumb">${x.image?`<img src="${safe(x.image)}" alt="${safe(x.name)}">`:`<div class="emoji">${x.category==="Game"?"🎮":"🌐"}</div>`}</div><div class="content"><h3>${safe(x.name)}</h3><span class="badge">${x.category==="Game"?"🎮 Game":"🌐 Web"}</span><p>${safe(x.description)}</p><br><a class="open" href="${safe(x.url)}" target="_blank" rel="noopener">🚀 Buka</a>${isAdmin?`<div class="actions"><button class="btn" onclick="editItem(${x.id})">✏️ Edit</button><button class="btn red" onclick="deleteItem(${x.id})">🗑️ Hapus</button></div>`:""}</div></article>`).join("")}
+function setCategory(c,b){category=c;document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");render()}
+document.getElementById("search").addEventListener("input",render);
+function adminLogin(){if(isAdmin){isAdmin=false;document.getElementById("admin").classList.remove("show");render();return}const pin=prompt("Masukkan PIN Admin:");if(pin==="1234"){isAdmin=true;document.getElementById("admin").classList.add("show");render();alert("Login admin berhasil.")}else if(pin!==null)alert("PIN salah.")}
+function saveItem(){const name=document.getElementById("name").value.trim(),image=document.getElementById("image").value.trim(),url=document.getElementById("url").value.trim(),description=document.getElementById("description").value.trim()||"Tidak ada deskripsi.",cat=document.getElementById("category").value;if(!name||!url){alert("Nama dan URL wajib diisi.");return}if(editId){const x=items.find(a=>a.id===editId);Object.assign(x,{name,image,url,description,category:cat});editId=null}else items.push({id:Date.now(),name,image,url,description,category:cat});saveData();clearForm();render();alert("Berhasil disimpan!")}
+function editItem(id){const x=items.find(a=>a.id===id);if(!x)return;editId=id;document.getElementById("name").value=x.name;document.getElementById("image").value=x.image;document.getElementById("url").value=x.url;document.getElementById("description").value=x.description;document.getElementById("category").value=x.category;document.getElementById("admin").classList.add("show");scrollTo({top:0,behavior:"smooth"})}
+function deleteItem(id){if(confirm("Hapus item ini?")){items=items.filter(x=>x.id!==id);saveData();render()}}
+function clearForm(){editId=null;["name","image","url","description"].forEach(id=>document.getElementById(id).value="");document.getElementById("category").value="Game"}
+saveData();render();
+</script>
+</body>
+</html>
