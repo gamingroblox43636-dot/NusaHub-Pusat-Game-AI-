@@ -5,9 +5,10 @@
 <meta name="google-site-verification" content="vfj9C0SvjW-CTxckZtHSa3X7Ja4mTNqjRL6VmA7n1NY" />
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>WebNesia — Kumpulan Web & Game Indonesia</title>
-<meta name="description" content="WebNesia adalah portal kumpulan website dan game Indonesia. Temukan website menarik dan game browser dengan mudah.">
+<meta name="description" content="WebNesia adalah portal kumpulan website dan game pilihan. Temukan web menarik dan game browser dengan mudah.">
 <meta name="robots" content="index,follow">
+<title>WebNesia — Kumpulan Web & Game Indonesia</title>
+
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:Arial,sans-serif;background:#0b1020;color:#fff;min-height:100vh}
@@ -26,7 +27,7 @@ main{max-width:1100px;margin:auto;padding:20px}
 .emoji{font-size:50px}
 .content{padding:16px}
 .content h3{font-size:19px;margin-bottom:8px}
-.content p{color:#94a3b8;font-size:14px;line-height:1.5;min-height:42px}
+.content p{color:#94a3b8;font-size:14px;line-height:1.5;min-height:42px;overflow-wrap:anywhere}
 .badge{display:inline-block;margin:4px 0 12px;padding:5px 9px;border-radius:8px;background:#1d4ed8;font-size:12px}
 .open{display:block;width:100%;padding:11px;border-radius:11px;background:#2563eb;color:#fff;text-align:center;text-decoration:none;font-weight:bold}
 .empty{text-align:center;padding:60px 20px;color:#94a3b8}
@@ -80,7 +81,7 @@ footer{text-align:center;color:#64748b;padding:35px 20px}
 </main>
 
 <footer>WebNesia © 2026<br>Kumpulan Web & Game Indonesia</footer>
-<button class="admin-float" onclick="adminLogin()">⚙️</button>
+<button class="admin-float" onclick="adminLogin()" aria-label="Admin">⚙️</button>
 
 <script>
 const defaults=[
@@ -88,46 +89,54 @@ const defaults=[
 {id:2,name:"Game Browser",description:"Temukan berbagai game yang bisa dimainkan di browser.",image:"",url:"https://poki.com/",category:"Game"}
 ];
 
-let items=JSON.parse(localStorage.getItem("webnesia_items"))||defaults;
+let items;
+try {
+ const stored=localStorage.getItem("webnesia_items");
+ items=stored?JSON.parse(stored):defaults;
+ if(!Array.isArray(items)) items=defaults;
+} catch(e) { items=defaults; }
+
 let category="Semua",editId=null,isAdmin=false;
 
 function saveData(){
- localStorage.setItem("webnesia_items",JSON.stringify(items));
+ try {localStorage.setItem("webnesia_items",JSON.stringify(items));}
+ catch(e){alert("Penyimpanan browser tidak tersedia.");}
 }
 
 function safe(v){
- return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
+ return String(v??"").replaceAll("&","&amp;").replaceAll("<","&lt;")
+ .replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
 }
 
 function render(){
  const q=document.getElementById("search").value.toLowerCase();
  const data=items.filter(x=>
  (category==="Semua"||x.category===category)&&
- (x.name.toLowerCase().includes(q)||x.description.toLowerCase().includes(q))
+ (String(x.name||"").toLowerCase().includes(q)||
+ String(x.description||"").toLowerCase().includes(q))
  );
  const grid=document.getElementById("grid");
 
  if(!data.length){
-  grid.innerHTML='<div class="empty"><h2>😕 Tidak ditemukan</h2><p>Coba pencarian lain.</p></div>';
-  return;
+ grid.innerHTML='<div class="empty"><h2>😕 Tidak ditemukan</h2><p>Coba pencarian lain.</p></div>';
+ return;
  }
 
  grid.innerHTML=data.map(x=>`
  <article class="card">
  <div class="thumb">
- ${x.image?`<img src="${safe(x.image)}" alt="${safe(x.name)}">`:`<div class="emoji">${x.category==="Game"?"🎮":"🌐"}</div>`}
+ ${x.image?`<img src="${safe(x.image)}" alt="${safe(x.name)}" loading="lazy">`:`<div class="emoji">${x.category==="Game"?"🎮":"🌐"}</div>`}
  </div>
  <div class="content">
  <h3>${safe(x.name)}</h3>
  <span class="badge">${x.category==="Game"?"🎮 Game":"🌐 Web"}</span>
  <p>${safe(x.description)}</p><br>
- <a class="open" href="${safe(x.url)}" target="_blank" rel="noopener">🚀 Buka</a>
+ <a class="open" href="${safe(x.url)}" target="_blank" rel="noopener noreferrer">🚀 Buka</a>
  ${isAdmin?`<div class="actions">
- <button class="btn" onclick="editItem(${x.id})">✏️ Edit</button>
- <button class="btn red" onclick="deleteItem(${x.id})">🗑️ Hapus</button>
+ <button class="btn" onclick="editItem(${Number(x.id)})">✏️ Edit</button>
+ <button class="btn red" onclick="deleteItem(${Number(x.id)})">🗑️ Hapus</button>
  </div>`:""}
- </div>
- </article>`).join("");
+ </div></article>`).join("");
 }
 
 function setCategory(c,b){
@@ -141,18 +150,18 @@ document.getElementById("search").addEventListener("input",render);
 
 function adminLogin(){
  if(isAdmin){
-  isAdmin=false;
-  document.getElementById("admin").classList.remove("show");
-  render();
-  return;
+ isAdmin=false;
+ document.getElementById("admin").classList.remove("show");
+ render();
+ return;
  }
  const pin=prompt("Masukkan PIN Admin:");
  if(pin==="1234"){
-  isAdmin=true;
-  document.getElementById("admin").classList.add("show");
-  render();
-  alert("Login admin berhasil.");
- }else if(pin!==null)alert("PIN salah.");
+ isAdmin=true;
+ document.getElementById("admin").classList.add("show");
+ render();
+ alert("Login admin berhasil.");
+ }else if(pin!==null){alert("PIN salah.");}
 }
 
 function saveItem(){
@@ -162,17 +171,15 @@ function saveItem(){
  const description=document.getElementById("description").value.trim()||"Tidak ada deskripsi.";
  const cat=document.getElementById("category").value;
 
- if(!name||!url){
-  alert("Nama dan URL wajib diisi.");
-  return;
- }
+ if(!name||!url){alert("Nama dan URL wajib diisi.");return;}
+ if(!/^https?:\/\//i.test(url)){alert("URL harus diawali http:// atau https://");return;}
 
- if(editId){
-  const x=items.find(a=>a.id===editId);
-  Object.assign(x,{name,image,url,description,category:cat});
-  editId=null;
+ if(editId!==null){
+ const x=items.find(a=>a.id===editId);
+ if(x) Object.assign(x,{name,image,url,description,category:cat});
+ editId=null;
  }else{
-  items.push({id:Date.now(),name,image,url,description,category:cat});
+ items.push({id:Date.now(),name,image,url,description,category:cat});
  }
 
  saveData();
@@ -185,20 +192,20 @@ function editItem(id){
  const x=items.find(a=>a.id===id);
  if(!x)return;
  editId=id;
- document.getElementById("name").value=x.name;
- document.getElementById("image").value=x.image;
- document.getElementById("url").value=x.url;
- document.getElementById("description").value=x.description;
- document.getElementById("category").value=x.category;
+ document.getElementById("name").value=x.name||"";
+ document.getElementById("image").value=x.image||"";
+ document.getElementById("url").value=x.url||"";
+ document.getElementById("description").value=x.description||"";
+ document.getElementById("category").value=x.category||"Game";
  document.getElementById("admin").classList.add("show");
  scrollTo({top:0,behavior:"smooth"});
 }
 
 function deleteItem(id){
  if(confirm("Hapus item ini?")){
-  items=items.filter(x=>x.id!==id);
-  saveData();
-  render();
+ items=items.filter(x=>x.id!==id);
+ saveData();
+ render();
  }
 }
 
